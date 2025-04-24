@@ -1,36 +1,37 @@
 import { store } from "../app/store"
 import { updateCryptoData } from "../features/crypto/cryptoSlice"
+import { initialCryptoData } from "../data/initialCryptoData"
+import type { Crypto } from "../types"
 
 class FallbackService {
   private intervalId: number | null = null
+  private cryptoData: Crypto[] = []
 
-  start(): void {
-    if (this.intervalId) {
-      this.stop()
-    }
+  start() {
+    console.log("Starting fallback service...")
 
-    // Simulate WebSocket updates every 1.5 seconds
-    this.intervalId = window.setInterval(() => {
-      this.simulateUpdate()
-    }, 1500)
+    // Initialize with the initial data
+    this.cryptoData = [...initialCryptoData]
 
-    console.log("Fallback service started")
+    // Update the data every 1-2 seconds
+    this.intervalId = window.setInterval(
+      () => {
+        this.updateData()
+      },
+      1000 + Math.random() * 1000,
+    )
   }
 
-  stop(): void {
+  stop() {
     if (this.intervalId !== null) {
       clearInterval(this.intervalId)
       this.intervalId = null
-      console.log("Fallback service stopped")
     }
+    console.log("Fallback service stopped")
   }
 
-  private simulateUpdate(): void {
-    // Get current state
-    const { cryptos } = store.getState().crypto
-
-    // Generate random updates for each crypto
-    const updatedCryptos = cryptos.map((crypto) => {
+  private updateData() {
+    const updatedData = this.cryptoData.map((crypto) => {
       // Generate random price changes
       const priceChange = (Math.random() * 2 - 1) * 0.01 // -1% to +1%
       const newPrice = crypto.price * (1 + priceChange)
@@ -43,12 +44,9 @@ class FallbackService {
       // Generate random volume changes
       const volumeChange = Math.random() * 0.04 - 0.02 // -2% to +2%
       const newVolume = crypto.volume24h * (1 + volumeChange)
-      const newVolumeInCrypto = newVolume / newPrice
+      const newVolumeInCrypto = crypto.volumeInCrypto * (1 + volumeChange)
 
-      // Calculate new market cap based on new price
-      const newMarketCap = crypto.circulatingSupply * newPrice
-
-      // Update sparkline data by removing the first point and adding a new one
+      // Update sparkline data
       const newSparkline = [...crypto.sparkline7d.slice(1), newPrice]
 
       return {
@@ -59,13 +57,15 @@ class FallbackService {
         change7d: new7dChange,
         volume24h: newVolume,
         volumeInCrypto: newVolumeInCrypto,
-        marketCap: newMarketCap,
         sparkline7d: newSparkline,
       }
     })
 
-    // Dispatch update action
-    store.dispatch(updateCryptoData(updatedCryptos))
+    // Update the Redux store
+    store.dispatch(updateCryptoData(updatedData))
+
+    // Update our local copy
+    this.cryptoData = updatedData
   }
 }
 

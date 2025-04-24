@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import { startWebSocketConnection, stopWebSocketConnection } from "./features/crypto/cryptoSlice"
 import { fallbackService } from "./services/fallbackService"
+import { selectWebSocketActive } from "./features/crypto/cryptoSelectors"
 import CryptoTable from "./components/CryptoTable"
 import Header from "./components/Header"
 import MarketOverview from "./components/MarketOverview"
@@ -15,63 +16,69 @@ import PortfolioPage from "./pages/PortfolioPage"
 import "./App.css"
 
 function App() {
-  // Add state to track if we're on the client
-  const [isClient, setIsClient] = useState(false)
   const dispatch = useDispatch()
+  const webSocketActive = useSelector(selectWebSocketActive)
+  const [isLiveUpdates, setIsLiveUpdates] = useState(true)
 
-  // Set isClient to true once component mounts (client-side only)
+  // Start WebSocket connection when the component mounts
   useEffect(() => {
-    setIsClient(true)
-  }, [])
+    if (isLiveUpdates) {
+      try {
+        dispatch(startWebSocketConnection())
 
-  useEffect(() => {
-    // Only run this effect on the client side
-    if (!isClient) return
+        // Set a timeout to check if WebSocket is working
+        const timeoutId = setTimeout(() => {
+          // If we haven't received any data after 10 seconds, fall back to simulation
+          if (!webSocketActive) {
+            console.log("WebSocket connection failed, falling back to simulation")
+            fallbackService.start()
+          }
+        }, 10000)
 
-    // Try to use WebSocket first
-    try {
-      dispatch(startWebSocketConnection())
-
-      // Set a timeout to check if WebSocket is working
-      const timeoutId = setTimeout(() => {
-        // If we haven't received any data after 10 seconds, fall back to simulation
+        return () => {
+          clearTimeout(timeoutId)
+          if (webSocketActive) {
+            dispatch(stopWebSocketConnection())
+          } else {
+            fallbackService.stop()
+          }
+        }
+      } catch (error) {
+        console.error("Failed to start WebSocket connection:", error)
         fallbackService.start()
-        dispatch(stopWebSocketConnection())
-      }, 10000)
 
-      return () => {
-        clearTimeout(timeoutId)
-        dispatch(stopWebSocketConnection())
-        fallbackService.stop()
+        return () => {
+          fallbackService.stop()
+        }
       }
-    } catch (error) {
-      console.error("Failed to start WebSocket connection:", error)
-      fallbackService.start()
-
-      return () => {
+    } else {
+      // Stop all data sources when live updates are disabled
+      if (webSocketActive) {
+        dispatch(stopWebSocketConnection())
+      } else {
         fallbackService.stop()
       }
     }
-  }, [dispatch, isClient])
+  }, [dispatch, webSocketActive, isLiveUpdates])
 
-  // Render a loading state until we're on the client
-  if (!isClient) {
-    return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
-        </div>
-      </div>
-    )
+  const toggleLiveUpdates = () => {
+    setIsLiveUpdates(!isLiveUpdates)
   }
 
-  // Only render the Router on the client side
   return (
     <Router>
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
         <Header />
         <main className="container mx-auto px-4 py-8 flex-grow">
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={toggleLiveUpdates}
+              className={`px-4 py-2 rounded-lg ${isLiveUpdates ? "bg-green-600 text-white" : "bg-red-600 text-white"}`}
+            >
+              {isLiveUpdates ? "Live Updates: ON" : "Live Updates: OFF"}
+            </button>
+          </div>
+
           <Routes>
             <Route
               path="/"

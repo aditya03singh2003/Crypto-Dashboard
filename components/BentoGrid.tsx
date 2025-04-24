@@ -1,27 +1,11 @@
-"use client"
-
-import { useSelector } from "react-redux"
-import { selectCryptocurrencies } from "@/lib/cryptoSlice"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowUpRight, ArrowDownRight, TrendingUp } from "lucide-react"
+import { getTopGainers, getTopLosers, getTrending } from "@/lib/mockData"
 
 const BentoGrid = () => {
-  const cryptocurrencies = useSelector(selectCryptocurrencies)
-
-  // Get top gainer
-  const topGainer = [...cryptocurrencies].sort((a, b) => b.change24h - a.change24h)[0]
-
-  // Get top loser
-  const topLoser = [...cryptocurrencies].sort((a, b) => a.change24h - b.change24h)[0]
-
-  // Get trending (highest volume)
-  const trending = [...cryptocurrencies].sort((a, b) => b.volume24h - a.volume24h)[0]
-
-  // Calculate total market cap
-  const totalMarketCap = cryptocurrencies.reduce((sum, crypto) => sum + crypto.marketCap, 0) / 1e12 // Convert to trillions
-
-  // Calculate 24h market change
-  const marketChange = cryptocurrencies.reduce((sum, crypto) => sum + crypto.change24h, 0) / cryptocurrencies.length
+  const topGainer = getTopGainers(1)[0]
+  const topLoser = getTopLosers(1)[0]
+  const trending = getTrending(1)[0]
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -42,11 +26,8 @@ const BentoGrid = () => {
           </svg>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">${totalMarketCap.toFixed(2)}T</div>
-          <p className="text-xs text-muted-foreground">
-            {marketChange >= 0 ? "+" : ""}
-            {marketChange.toFixed(2)}% from last 24h
-          </p>
+          <div className="text-2xl font-bold">$1.23T</div>
+          <p className="text-xs text-muted-foreground">+2.5% from last 24h</p>
         </CardContent>
       </Card>
       <Card>
@@ -56,7 +37,7 @@ const BentoGrid = () => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{topGainer.name}</div>
-          <p className="text-xs text-muted-foreground">+{topGainer.change24h.toFixed(2)}% in last 24h</p>
+          <p className="text-xs text-muted-foreground">+{topGainer.change24h}% in last 24h</p>
         </CardContent>
       </Card>
       <Card>
@@ -66,7 +47,7 @@ const BentoGrid = () => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{topLoser.name}</div>
-          <p className="text-xs text-muted-foreground">{topLoser.change24h.toFixed(2)}% in last 24h</p>
+          <p className="text-xs text-muted-foreground">{topLoser.change24h}% in last 24h</p>
         </CardContent>
       </Card>
       <Card>

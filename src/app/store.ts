@@ -7,11 +7,7 @@ export const store = configureStore({
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: {
-        // Ignore non-serializable values in the Redux state
-        ignoredActions: ["crypto/setWebSocketInterval"],
-        ignoredPaths: ["crypto.webSocketInterval"],
-      },
+      serializableCheck: false,
     }),
 })
 

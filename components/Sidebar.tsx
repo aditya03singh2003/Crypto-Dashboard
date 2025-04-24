@@ -11,12 +11,7 @@ import PortfolioModal from "./PortfolioModal"
 const Sidebar = () => {
   return (
     <div className="w-64 bg-card h-screen p-4 hidden lg:block border-r border-border">
-      <div className="flex items-center mb-6">
-        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground mr-2">
-          <span className="font-bold">C</span>
-        </div>
-        <h2 className="text-2xl font-bold text-primary">CryptoTracker</h2>
-      </div>
+      <h2 className="text-2xl font-bold mb-6 text-primary">CryptoTracker</h2>
       <nav>
         <ul className="space-y-2">
           <li>

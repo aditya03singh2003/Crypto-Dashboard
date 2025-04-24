@@ -17,6 +17,15 @@ export const selectSortConfig = (state: RootState) => ({
 // Selector to get filter
 export const selectFilter = (state: RootState) => state.crypto.filter
 
+// Selector to get theme
+export const selectTheme = (state: RootState) => state.crypto.theme
+
+// Selector to get currency
+export const selectCurrency = (state: RootState) => state.crypto.currency
+
+// Selector to get user portfolio
+export const selectUserPortfolio = (state: RootState) => state.crypto.userPortfolio
+
 // Selector to get filtered cryptos
 export const selectFilteredCryptos = createSelector(
   [selectCryptos, selectFavorites, selectFilter],
@@ -84,3 +93,36 @@ export const selectTopGainers = createSelector([selectCryptos], (cryptos) => {
 export const selectTopLosers = createSelector([selectCryptos], (cryptos) => {
   return [...cryptos].sort((a, b) => a.change24h - b.change24h).slice(0, 5)
 })
+
+// Selector to get portfolio value
+export const selectPortfolioValue = createSelector([selectCryptos, selectUserPortfolio], (cryptos, portfolio) => {
+  return Object.entries(portfolio).reduce((total, [symbol, amount]) => {
+    const crypto = cryptos.find((c) => c.symbol === symbol)
+    return total + (crypto ? crypto.price * amount : 0)
+  }, 0)
+})
+
+// Selector to get portfolio assets with current values
+export const selectPortfolioAssets = createSelector([selectCryptos, selectUserPortfolio], (cryptos, portfolio) => {
+  return Object.entries(portfolio)
+    .map(([symbol, amount]) => {
+      const crypto = cryptos.find((c) => c.symbol === symbol)
+      if (!crypto) return null
+
+      return {
+        id: crypto.id,
+        name: crypto.name,
+        symbol: crypto.symbol,
+        image: crypto.image,
+        amount,
+        price: crypto.price,
+        value: crypto.price * amount,
+        change24h: crypto.change24h,
+        change7d: crypto.change7d,
+      }
+    })
+    .filter(Boolean)
+})
+
+// Selector to get WebSocket active state
+export const selectWebSocketActive = (state: RootState) => state.crypto.webSocketActive

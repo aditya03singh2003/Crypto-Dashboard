@@ -1,152 +1,180 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useSelector } from "react-redux"
-import { selectCryptocurrencies } from "@/lib/cryptoSlice"
+import { useState } from "react"
+import { useSelector, useDispatch } from "react-redux"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Trash2, Wallet } from "lucide-react"
-
-// Define portfolio item type
-interface PortfolioItem {
-  cryptoId: number
-  amount: number
-}
+import { Label } from "@/components/ui/label"
+import {
+  selectCryptos,
+  selectUserPortfolio,
+  selectPortfolioValue,
+  selectPortfolioAssets,
+} from "../src/features/crypto/cryptoSelectors"
+import { updatePortfolio, clearPortfolio } from "../src/features/crypto/cryptoSlice"
+import { formatCurrency } from "../src/utils/formatters"
 
 const PortfolioModal = () => {
-  const cryptocurrencies = useSelector(selectCryptocurrencies)
+  const dispatch = useDispatch()
+  const cryptos = useSelector(selectCryptos)
+  const portfolio = useSelector(selectUserPortfolio)
+  const portfolioValue = useSelector(selectPortfolioValue)
+  const portfolioAssets = useSelector(selectPortfolioAssets)
 
-  // Load portfolio from localStorage
-  const loadPortfolio = (): PortfolioItem[] => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("cryptoPortfolio")
-      if (saved) {
-        try {
-          return JSON.parse(saved)
-        } catch (e) {
-          console.error("Failed to parse portfolio from localStorage", e)
-        }
-      }
-    }
-    return [
-      { cryptoId: 1, amount: 0.5 },
-      { cryptoId: 2, amount: 5 },
-      { cryptoId: 6, amount: 1000 },
-    ]
-  }
+  const [selectedCrypto, setSelectedCrypto] = useState("")
+  const [amount, setAmount] = useState("")
+  const [open, setOpen] = useState(false)
 
-  const [portfolio, setPortfolio] = useState<PortfolioItem[]>(loadPortfolio())
-  const [newAsset, setNewAsset] = useState({ cryptoId: 1, amount: "" })
-
-  // Save portfolio to localStorage when it changes
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("cryptoPortfolio", JSON.stringify(portfolio))
-    }
-  }, [portfolio])
-
-  const addAsset = () => {
-    if (newAsset.amount && Number.parseFloat(newAsset.amount) > 0) {
-      setPortfolio([...portfolio, { ...newAsset, amount: Number.parseFloat(newAsset.amount) }])
-      setNewAsset({ cryptoId: 1, amount: "" })
+  const handleAddAsset = () => {
+    if (selectedCrypto && amount && Number.parseFloat(amount) > 0) {
+      dispatch(
+        updatePortfolio({
+          symbol: selectedCrypto,
+          amount: Number.parseFloat(amount),
+        }),
+      )
+      setSelectedCrypto("")
+      setAmount("")
     }
   }
 
-  const removeAsset = (cryptoId: number) => {
-    setPortfolio(portfolio.filter((asset) => asset.cryptoId !== cryptoId))
+  const handleRemoveAsset = (symbol: string) => {
+    dispatch(
+      updatePortfolio({
+        symbol,
+        amount: 0,
+      }),
+    )
   }
 
-  // Calculate portfolio value and assets
-  const portfolioWithValues = portfolio.map((item) => {
-    const crypto = cryptocurrencies.find((c) => c.id === item.cryptoId)
-    return {
-      cryptoId: item.cryptoId,
-      name: crypto?.name || "",
-      symbol: crypto?.symbol || "",
-      amount: item.amount,
-      price: crypto?.price || 0,
-      value: (crypto?.price || 0) * item.amount,
-      change24h: crypto?.change24h || 0,
+  const handleClearPortfolio = () => {
+    if (window.confirm("Are you sure you want to clear your portfolio?")) {
+      dispatch(clearPortfolio())
     }
-  })
-
-  const totalValue = portfolioWithValues.reduce((sum, asset) => sum + asset.value, 0)
+  }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full mt-2">
-          <Wallet className="mr-2 h-4 w-4" />
-          View Portfolio
+          Manage Portfolio
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[725px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Your Portfolio</DialogTitle>
         </DialogHeader>
-        <div className="mt-4">
-          <div className="text-2xl font-bold mb-4">
-            Total Value: ${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+
+        <div className="grid gap-4 py-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium">Total Value</h3>
+            <p className="text-2xl font-bold">{formatCurrency(portfolioValue)}</p>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Asset</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Value</TableHead>
-                <TableHead>24h Change</TableHead>
-                <TableHead>Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {portfolioWithValues.map((item) => (
-                <TableRow key={item.cryptoId}>
-                  <TableCell>{item.symbol}</TableCell>
-                  <TableCell>{item.amount}</TableCell>
-                  <TableCell>${item.value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
-                  <TableCell className={item.change24h >= 0 ? "text-green-500" : "text-red-500"}>
-                    {item.change24h > 0 ? "+" : ""}
-                    {item.change24h.toFixed(2)}%
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => removeAsset(item.cryptoId)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="mt-4 flex space-x-2">
-            <Select
-              value={newAsset.cryptoId.toString()}
-              onValueChange={(value) => setNewAsset({ ...newAsset, cryptoId: Number.parseInt(value) })}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select asset" />
-              </SelectTrigger>
-              <SelectContent>
-                {cryptocurrencies.map((crypto) => (
-                  <SelectItem key={crypto.id} value={crypto.id.toString()}>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-3 sm:col-span-1">
+              <Label htmlFor="crypto">Cryptocurrency</Label>
+              <select
+                id="crypto"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={selectedCrypto}
+                onChange={(e) => setSelectedCrypto(e.target.value)}
+              >
+                <option value="">Select a cryptocurrency</option>
+                {cryptos.map((crypto) => (
+                  <option key={crypto.id} value={crypto.symbol}>
                     {crypto.name} ({crypto.symbol})
-                  </SelectItem>
+                  </option>
                 ))}
-              </SelectContent>
-            </Select>
-            <Input
-              type="number"
-              placeholder="Amount"
-              value={newAsset.amount}
-              onChange={(e) => setNewAsset({ ...newAsset, amount: e.target.value })}
-              className="flex-1"
-            />
-            <Button onClick={addAsset}>
-              <Plus className="h-4 w-4 mr-2" /> Add Asset
-            </Button>
+              </select>
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <Label htmlFor="amount">Amount</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="any"
+                min="0"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="col-span-1 flex items-end">
+              <Button onClick={handleAddAsset} className="w-full">
+                Add
+              </Button>
+            </div>
           </div>
+
+          {portfolioAssets.length > 0 ? (
+            <div className="mt-4">
+              <h3 className="text-lg font-medium mb-2">Your Assets</h3>
+              <div className="border rounded-md overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Asset
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Amount
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Price
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Value
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                    {portfolioAssets.map((asset) => (
+                      <tr key={asset.symbol}>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <img src={asset.image || "/placeholder.svg"} alt={asset.name} className="h-6 w-6 mr-2" />
+                            <div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">{asset.name}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">{asset.symbol}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                          {asset.amount}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                          {formatCurrency(asset.price)}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                          {formatCurrency(asset.value)}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-right text-sm">
+                          <button
+                            onClick={() => handleRemoveAsset(asset.symbol)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Button variant="destructive" className="mt-4" onClick={handleClearPortfolio}>
+                Clear Portfolio
+              </Button>
+            </div>
+          ) : (
+            <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+              Your portfolio is empty. Add some assets to get started.
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -1,21 +1,5 @@
 import type { Crypto } from "../types"
 
-// Generate random sparkline data for the last 7 days
-const generateSparklineData = (basePrice: number, volatility = 0.05, trend = 0): number[] => {
-  const data: number[] = []
-  let currentPrice = basePrice
-
-  for (let i = 0; i < 50; i++) {
-    // Add a slight trend bias
-    const trendBias = trend * 0.002
-    const change = (Math.random() * 2 - 1 + trendBias) * volatility
-    currentPrice = currentPrice * (1 + change)
-    data.push(currentPrice)
-  }
-
-  return data
-}
-
 export const initialCryptoData: Crypto[] = [
   {
     id: "bitcoin",
@@ -28,10 +12,10 @@ export const initialCryptoData: Crypto[] = [
     change7d: 11.11,
     marketCap: 1861618902186,
     volume24h: 43874950947,
-    volumeInCrypto: 467810,
-    circulatingSupply: 19850000,
-    maxSupply: 21000000,
-    sparkline7d: generateSparklineData(93759.48, 0.02, 1), // Positive trend
+    volumeInCrypto: 467.81,
+    circulatingSupply: 19.85 * 1000000,
+    maxSupply: 21 * 1000000,
+    sparkline7d: [88000, 89000, 90000, 91000, 92000, 93000, 93759.48],
   },
   {
     id: "ethereum",
@@ -44,10 +28,10 @@ export const initialCryptoData: Crypto[] = [
     change7d: 13.68,
     marketCap: 217581279327,
     volume24h: 23547469307,
-    volumeInCrypto: 13050000,
-    circulatingSupply: 120710000,
+    volumeInCrypto: 13.05,
+    circulatingSupply: 120.71 * 1000000,
     maxSupply: null,
-    sparkline7d: generateSparklineData(1802.46, 0.03, 1), // Positive trend
+    sparkline7d: [1600, 1650, 1700, 1750, 1780, 1790, 1802.46],
   },
   {
     id: "tether",
@@ -60,10 +44,10 @@ export const initialCryptoData: Crypto[] = [
     change7d: 0.04,
     marketCap: 145320022085,
     volume24h: 92288882007,
-    volumeInCrypto: 92250000000,
-    circulatingSupply: 145270000000,
+    volumeInCrypto: 92.25 * 1000000,
+    circulatingSupply: 145.27 * 1000000,
     maxSupply: null,
-    sparkline7d: generateSparklineData(1.0, 0.001, 0), // Stable
+    sparkline7d: [1, 1, 1, 1, 1, 1, 1],
   },
   {
     id: "ripple",
@@ -76,13 +60,13 @@ export const initialCryptoData: Crypto[] = [
     change7d: 6.18,
     marketCap: 130073814966,
     volume24h: 5131481491,
-    volumeInCrypto: 2300000000,
-    circulatingSupply: 58390000000,
-    maxSupply: 100000000000,
-    sparkline7d: generateSparklineData(2.22, 0.025, 1), // Positive trend
+    volumeInCrypto: 2.3 * 1000000,
+    circulatingSupply: 58.39 * 1000000,
+    maxSupply: 100 * 1000000,
+    sparkline7d: [2.1, 2.12, 2.15, 2.18, 2.2, 2.21, 2.22],
   },
   {
-    id: "bnb",
+    id: "binancecoin",
     name: "BNB",
     symbol: "BNB",
     image: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
@@ -92,10 +76,10 @@ export const initialCryptoData: Crypto[] = [
     change7d: 3.73,
     marketCap: 85471956947,
     volume24h: 1874281784,
-    volumeInCrypto: 3080000,
-    circulatingSupply: 140890000,
-    maxSupply: 200000000,
-    sparkline7d: generateSparklineData(606.65, 0.02, 0.5), // Slight positive trend
+    volumeInCrypto: 3.08 * 1000000,
+    circulatingSupply: 140.89 * 1000000,
+    maxSupply: 200 * 1000000,
+    sparkline7d: [580, 585, 590, 595, 600, 605, 606.65],
   },
   {
     id: "solana",
@@ -108,9 +92,9 @@ export const initialCryptoData: Crypto[] = [
     change7d: 14.74,
     marketCap: 78381958631,
     volume24h: 4881674486,
-    volumeInCrypto: 32250000,
-    circulatingSupply: 517310000,
+    volumeInCrypto: 32.25 * 1000000,
+    circulatingSupply: 517.31 * 1000000,
     maxSupply: null,
-    sparkline7d: generateSparklineData(151.51, 0.03, 1), // Positive trend
+    sparkline7d: [130, 135, 140, 145, 148, 150, 151.51],
   },
 ]

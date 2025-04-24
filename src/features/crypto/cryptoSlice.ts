@@ -11,6 +11,9 @@ interface CryptoState {
   filter: FilterType
   favorites: string[]
   webSocketActive: boolean
+  theme: "light" | "dark" | "system"
+  currency: string
+  userPortfolio: { [key: string]: number } // Symbol -> Amount
 }
 
 // Load state from localStorage if available
@@ -41,6 +44,9 @@ const initialState: CryptoState = {
   filter: "all",
   favorites: [],
   webSocketActive: false,
+  theme: "system",
+  currency: "USD",
+  userPortfolio: {},
   ...savedState,
 }
 
@@ -58,6 +64,9 @@ const saveState = (state: CryptoState) => {
       sortDirection: state.sortDirection,
       filter: state.filter,
       favorites: state.favorites,
+      theme: state.theme,
+      currency: state.currency,
+      userPortfolio: state.userPortfolio,
     }
     const serializedState = JSON.stringify(stateToSave)
     localStorage.setItem("cryptoState", serializedState)
@@ -97,11 +106,47 @@ export const cryptoSlice = createSlice({
     setWebSocketActive: (state, action: PayloadAction<boolean>) => {
       state.webSocketActive = action.payload
     },
+    setTheme: (state, action: PayloadAction<"light" | "dark" | "system">) => {
+      state.theme = action.payload
+      saveState(state)
+    },
+    setCurrency: (state, action: PayloadAction<string>) => {
+      state.currency = action.payload
+      saveState(state)
+    },
+    updatePortfolio: (state, action: PayloadAction<{ symbol: string; amount: number }>) => {
+      const { symbol, amount } = action.payload
+      if (amount <= 0) {
+        // Remove from portfolio if amount is zero or negative
+        const { [symbol]: _, ...rest } = state.userPortfolio
+        state.userPortfolio = rest
+      } else {
+        state.userPortfolio = {
+          ...state.userPortfolio,
+          [symbol]: amount,
+        }
+      }
+      saveState(state)
+    },
+    clearPortfolio: (state) => {
+      state.userPortfolio = {}
+      saveState(state)
+    },
   },
 })
 
-export const { updateCryptoData, setSortBy, setSortDirection, setFilter, toggleFavorite, setWebSocketActive } =
-  cryptoSlice.actions
+export const {
+  updateCryptoData,
+  setSortBy,
+  setSortDirection,
+  setFilter,
+  toggleFavorite,
+  setWebSocketActive,
+  setTheme,
+  setCurrency,
+  updatePortfolio,
+  clearPortfolio,
+} = cryptoSlice.actions
 
 // Thunk to start WebSocket connection
 export const startWebSocketConnection = (): AppThunk => (dispatch, getState) => {

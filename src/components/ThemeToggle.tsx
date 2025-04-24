@@ -1,46 +1,70 @@
 "use client"
 
-import { Moon, Sun, Monitor } from "lucide-react"
-import { useTheme } from "../hooks/useTheme"
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { Moon, Sun } from "lucide-react"
+import { setTheme } from "../features/crypto/cryptoSlice"
+import { selectTheme } from "../features/crypto/cryptoSelectors"
 
 export function ThemeToggle() {
-  // Add client-side only rendering
-  const [isClient, setIsClient] = useState(false)
+  const dispatch = useDispatch()
+  const theme = useSelector(selectTheme)
 
+  // Update the theme when it changes in Redux
   useEffect(() => {
-    setIsClient(true)
-  }, [])
+    const root = window.document.documentElement
 
-  const { theme, setTheme } = useTheme()
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
 
-  const cycleTheme = () => {
-    if (theme === "light") setTheme("dark")
-    else if (theme === "dark") setTheme("system")
-    else setTheme("light")
-  }
+      if (systemTheme === "dark") {
+        root.classList.add("dark")
+      } else {
+        root.classList.remove("dark")
+      }
+    } else if (theme === "dark") {
+      root.classList.add("dark")
+    } else {
+      root.classList.remove("dark")
+    }
+  }, [theme])
 
-  // Show a simplified toggle during SSR
-  if (!isClient) {
-    return (
-      <button
-        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-        aria-label="Toggle theme"
-      >
-        <Sun size={20} />
-      </button>
-    )
+  // Listen for system theme changes
+  useEffect(() => {
+    if (theme === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+
+      const handleChange = (e: MediaQueryListEvent) => {
+        const root = window.document.documentElement
+        if (e.matches) {
+          root.classList.add("dark")
+        } else {
+          root.classList.remove("dark")
+        }
+      }
+
+      mediaQuery.addEventListener("change", handleChange)
+      return () => mediaQuery.removeEventListener("change", handleChange)
+    }
+  }, [theme])
+
+  const toggleTheme = () => {
+    if (theme === "light") {
+      dispatch(setTheme("dark"))
+    } else if (theme === "dark") {
+      dispatch(setTheme("system"))
+    } else {
+      dispatch(setTheme("light"))
+    }
   }
 
   return (
     <button
-      onClick={cycleTheme}
+      onClick={toggleTheme}
       className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-      aria-label="Toggle theme"
+      title={`Current theme: ${theme}`}
     >
-      {theme === "light" && <Sun size={20} />}
-      {theme === "dark" && <Moon size={20} />}
-      {theme === "system" && <Monitor size={20} />}
+      {theme === "dark" ? <Moon size={20} /> : <Sun size={20} />}
     </button>
   )
 }

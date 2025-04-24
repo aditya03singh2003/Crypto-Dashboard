@@ -1,130 +1,72 @@
 import { store } from "../app/store"
 import { updateCryptoData } from "../features/crypto/cryptoSlice"
-import type { Crypto } from "../types"
-import { WEBSOCKET_CONFIG } from "../config"
+import { WebSocketSimulator } from "../WebSocketSimulator"
+import { initialCryptoData } from "../data/initialCryptoData"
 
 class WebSocketService {
-  private socket: WebSocket | null = null
-  private reconnectTimeout: NodeJS.Timeout | null = null
+  private ws: WebSocketSimulator | null = null
   private reconnectAttempts = 0
-  private lastPrices: Record<string, number> = {}
+  private maxReconnectAttempts = 5
+  private reconnectTimeout: number | null = null
 
-  connect(): void {
-    if (this.socket) {
-      this.disconnect()
-    }
+  connect() {
+    console.log("Connecting to WebSocket...")
 
-    try {
-      // Connect to Binance WebSocket API for multiple streams
-      const streams = WEBSOCKET_CONFIG.SUPPORTED_PAIRS.map((symbol) => `${symbol}@ticker`).join("/")
-      this.socket = new WebSocket(`${WEBSOCKET_CONFIG.BASE_URL}/${streams}`)
+    // Create a new WebSocket simulator with initial data
+    this.ws = new WebSocketSimulator(initialCryptoData)
 
-      this.socket.onopen = () => {
-        console.log("WebSocket connected")
-        this.reconnectAttempts = 0 // Reset reconnect attempts on successful connection
-      }
+    // Add event listeners
+    this.ws.addEventListener("open", this.handleOpen)
+    this.ws.addEventListener("message", this.handleMessage)
+    this.ws.addEventListener("close", this.handleClose)
 
-      this.socket.onmessage = (event) => {
-        const data = JSON.parse(event.data)
-        this.handleTickerUpdate(data)
-      }
-
-      this.socket.onclose = () => {
-        console.log("WebSocket disconnected")
-        this.reconnect()
-      }
-
-      this.socket.onerror = (error) => {
-        console.error("WebSocket error:", error)
-        this.socket?.close()
-      }
-    } catch (error) {
-      console.error("Failed to connect to WebSocket:", error)
-      this.reconnect()
-    }
+    // Connect to the WebSocket
+    this.ws.connect()
   }
 
-  disconnect(): void {
-    if (this.socket) {
-      this.socket.close()
-      this.socket = null
+  disconnect() {
+    if (this.ws) {
+      this.ws.removeEventListener("open", this.handleOpen)
+      this.ws.removeEventListener("message", this.handleMessage)
+      this.ws.removeEventListener("close", this.handleClose)
+      this.ws.disconnect()
+      this.ws = null
     }
 
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout)
       this.reconnectTimeout = null
     }
+
+    this.reconnectAttempts = 0
   }
 
-  private reconnect(): void {
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout)
-    }
+  private handleOpen = () => {
+    console.log("WebSocket connection opened")
+    this.reconnectAttempts = 0
+  }
 
-    this.reconnectAttempts++
+  private handleMessage = (data: any) => {
+    // Update the Redux store with the new data
+    store.dispatch(updateCryptoData(data))
+  }
 
-    if (this.reconnectAttempts <= WEBSOCKET_CONFIG.MAX_RECONNECT_ATTEMPTS) {
-      console.log(`Reconnect attempt ${this.reconnectAttempts} of ${WEBSOCKET_CONFIG.MAX_RECONNECT_ATTEMPTS}`)
+  private handleClose = () => {
+    console.log("WebSocket connection closed")
 
-      this.reconnectTimeout = setTimeout(() => {
-        console.log("Attempting to reconnect...")
+    // Try to reconnect if we haven't exceeded the maximum number of attempts
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++
+
+      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000)
+      console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`)
+
+      this.reconnectTimeout = window.setTimeout(() => {
         this.connect()
-      }, WEBSOCKET_CONFIG.RECONNECT_INTERVAL)
+      }, delay)
     } else {
-      console.error("Max reconnect attempts reached. Giving up.")
-      // Could dispatch an action here to show an error to the user
+      console.error("Maximum reconnect attempts reached. Giving up.")
     }
-  }
-
-  private handleTickerUpdate(data: any): void {
-    // Extract the symbol from the stream name
-    const symbol = data.s?.toLowerCase() || ""
-
-    if (!symbol) return
-
-    // Get current state
-    const { cryptos } = store.getState().crypto
-
-    // Find the corresponding crypto in our state
-    const cryptoId = WEBSOCKET_CONFIG.SYMBOL_MAP[symbol]
-    if (!cryptoId) return
-
-    const cryptoIndex = cryptos.findIndex((c) => c.id === cryptoId)
-    if (cryptoIndex === -1) return
-
-    const crypto = cryptos[cryptoIndex]
-
-    // Calculate percentage changes
-    const currentPrice = Number.parseFloat(data.c)
-    const prevPrice = this.lastPrices[symbol] || currentPrice
-    const priceChange = currentPrice - prevPrice
-    const percentChange = prevPrice ? (priceChange / prevPrice) * 100 : 0
-
-    // Update last price
-    this.lastPrices[symbol] = currentPrice
-
-    // Create updated crypto object
-    const updatedCrypto: Crypto = {
-      ...crypto,
-      price: currentPrice,
-      change1h: Number.parseFloat(data.P) / 24, // Approximate 1h change from 24h change
-      change24h: Number.parseFloat(data.P), // 24h price change percent
-      change7d: crypto.change7d + percentChange * 0.05, // Simulate 7d change
-      volume24h: Number.parseFloat(data.q), // 24h volume
-      volumeInCrypto: Number.parseFloat(data.q) / currentPrice,
-      marketCap: crypto.circulatingSupply * currentPrice,
-    }
-
-    // Update sparkline data
-    const newSparkline = [...crypto.sparkline7d.slice(1), currentPrice]
-    updatedCrypto.sparkline7d = newSparkline
-
-    // Create a new array with the updated crypto
-    const updatedCryptos = [...cryptos]
-    updatedCryptos[cryptoIndex] = updatedCrypto
-
-    // Dispatch update action
-    store.dispatch(updateCryptoData(updatedCryptos))
   }
 }
 

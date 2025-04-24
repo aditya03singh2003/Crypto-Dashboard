@@ -59,12 +59,12 @@
     "vaul": "^0.9.6",
     "zod": "^3.24.1",
     "chart.js": "latest",
-    "react-redux": "latest",
     "redux": "latest",
+    "react-redux": "latest",
     "react-chartjs-2": "latest",
-    "@reduxjs/toolkit": "latest",
     "@testing-library/jest-dom": "latest",
     "@jest/globals": "latest",
+    "@reduxjs/toolkit": "latest",
     "react-router-dom": "latest"
   },
   "devDependencies": {
