@@ -1,43 +1,79 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSelector } from "react-redux"
+import { selectCryptocurrencies } from "@/lib/cryptoSlice"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { cryptocurrencies } from "@/lib/mockData"
 import { Plus, Trash2, Wallet } from "lucide-react"
 
+// Define portfolio item type
+interface PortfolioItem {
+  cryptoId: number
+  amount: number
+}
+
 const PortfolioModal = () => {
-  const [portfolio, setPortfolio] = useState([
-    { symbol: "BTC", amount: 0.5 },
-    { symbol: "ETH", amount: 5 },
-    { symbol: "ADA", amount: 1000 },
-  ])
-  const [newAsset, setNewAsset] = useState({ symbol: "BTC", amount: "" })
+  const cryptocurrencies = useSelector(selectCryptocurrencies)
+
+  // Load portfolio from localStorage
+  const loadPortfolio = (): PortfolioItem[] => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("cryptoPortfolio")
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch (e) {
+          console.error("Failed to parse portfolio from localStorage", e)
+        }
+      }
+    }
+    return [
+      { cryptoId: 1, amount: 0.5 },
+      { cryptoId: 2, amount: 5 },
+      { cryptoId: 6, amount: 1000 },
+    ]
+  }
+
+  const [portfolio, setPortfolio] = useState<PortfolioItem[]>(loadPortfolio())
+  const [newAsset, setNewAsset] = useState({ cryptoId: 1, amount: "" })
+
+  // Save portfolio to localStorage when it changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("cryptoPortfolio", JSON.stringify(portfolio))
+    }
+  }, [portfolio])
 
   const addAsset = () => {
     if (newAsset.amount && Number.parseFloat(newAsset.amount) > 0) {
       setPortfolio([...portfolio, { ...newAsset, amount: Number.parseFloat(newAsset.amount) }])
-      setNewAsset({ symbol: "BTC", amount: "" })
+      setNewAsset({ cryptoId: 1, amount: "" })
     }
   }
 
-  const removeAsset = (symbol: string) => {
-    setPortfolio(portfolio.filter((asset) => asset.symbol !== symbol))
+  const removeAsset = (cryptoId: number) => {
+    setPortfolio(portfolio.filter((asset) => asset.cryptoId !== cryptoId))
   }
 
+  // Calculate portfolio value and assets
   const portfolioWithValues = portfolio.map((item) => {
-    const crypto = cryptocurrencies.find((c) => c.symbol === item.symbol)
+    const crypto = cryptocurrencies.find((c) => c.id === item.cryptoId)
     return {
-      ...item,
-      value: crypto ? crypto.price * item.amount : 0,
-      change24h: crypto ? crypto.change24h : 0,
+      cryptoId: item.cryptoId,
+      name: crypto?.name || "",
+      symbol: crypto?.symbol || "",
+      amount: item.amount,
+      price: crypto?.price || 0,
+      value: (crypto?.price || 0) * item.amount,
+      change24h: crypto?.change24h || 0,
     }
   })
 
-  const totalValue = portfolioWithValues.reduce((sum, item) => sum + item.value, 0)
+  const totalValue = portfolioWithValues.reduce((sum, asset) => sum + asset.value, 0)
 
   return (
     <Dialog>
@@ -52,7 +88,9 @@ const PortfolioModal = () => {
           <DialogTitle>Your Portfolio</DialogTitle>
         </DialogHeader>
         <div className="mt-4">
-          <div className="text-2xl font-bold mb-4">Total Value: ${totalValue.toLocaleString()}</div>
+          <div className="text-2xl font-bold mb-4">
+            Total Value: ${totalValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -65,16 +103,16 @@ const PortfolioModal = () => {
             </TableHeader>
             <TableBody>
               {portfolioWithValues.map((item) => (
-                <TableRow key={item.symbol}>
+                <TableRow key={item.cryptoId}>
                   <TableCell>{item.symbol}</TableCell>
                   <TableCell>{item.amount}</TableCell>
-                  <TableCell>${item.value.toLocaleString()}</TableCell>
+                  <TableCell>${item.value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                   <TableCell className={item.change24h >= 0 ? "text-green-500" : "text-red-500"}>
                     {item.change24h > 0 ? "+" : ""}
-                    {item.change24h}%
+                    {item.change24h.toFixed(2)}%
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => removeAsset(item.symbol)}>
+                    <Button variant="ghost" size="sm" onClick={() => removeAsset(item.cryptoId)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -83,13 +121,16 @@ const PortfolioModal = () => {
             </TableBody>
           </Table>
           <div className="mt-4 flex space-x-2">
-            <Select value={newAsset.symbol} onValueChange={(value) => setNewAsset({ ...newAsset, symbol: value })}>
-              <SelectTrigger>
+            <Select
+              value={newAsset.cryptoId.toString()}
+              onValueChange={(value) => setNewAsset({ ...newAsset, cryptoId: Number.parseInt(value) })}
+            >
+              <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select asset" />
               </SelectTrigger>
               <SelectContent>
                 {cryptocurrencies.map((crypto) => (
-                  <SelectItem key={crypto.symbol} value={crypto.symbol}>
+                  <SelectItem key={crypto.id} value={crypto.id.toString()}>
                     {crypto.name} ({crypto.symbol})
                   </SelectItem>
                 ))}
@@ -100,6 +141,7 @@ const PortfolioModal = () => {
               placeholder="Amount"
               value={newAsset.amount}
               onChange={(e) => setNewAsset({ ...newAsset, amount: e.target.value })}
+              className="flex-1"
             />
             <Button onClick={addAsset}>
               <Plus className="h-4 w-4 mr-2" /> Add Asset

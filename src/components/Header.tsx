@@ -59,7 +59,9 @@ const Header = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center mb-4 md:mb-0">
-            <img src="/logo.png" alt="CryptoTracker" className="h-8 w-8 mr-2" />
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white mr-2">
+              <span className="font-bold">C</span>
+            </div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">CryptoTracker</h1>
 
             <nav className="hidden md:flex ml-8">

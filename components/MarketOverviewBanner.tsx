@@ -1,28 +1,35 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useSelector } from "react-redux"
+import { selectCryptocurrencies, selectIsLiveUpdatesEnabled } from "@/lib/cryptoSlice"
 import { Card, CardContent } from "@/components/ui/card"
+import { useEffect, useState } from "react"
 
 const MarketOverviewBanner = ({ liveUpdates }) => {
+  const cryptocurrencies = useSelector(selectCryptocurrencies)
+  const isLiveUpdatesEnabled = useSelector(selectIsLiveUpdatesEnabled)
+
   const [marketData, setMarketData] = useState({
-    totalMarketCap: 1.23,
-    volume24h: 78.9,
-    btcDominance: 46.2,
+    totalMarketCap: 0,
+    volume24h: 0,
+    btcDominance: 0,
   })
 
   useEffect(() => {
-    if (liveUpdates) {
-      const interval = setInterval(() => {
-        setMarketData((prevData) => ({
-          totalMarketCap: prevData.totalMarketCap * (1 + (Math.random() * 0.02 - 0.01)),
-          volume24h: prevData.volume24h * (1 + (Math.random() * 0.02 - 0.01)),
-          btcDominance: prevData.btcDominance + (Math.random() * 0.4 - 0.2),
-        }))
-      }, 2000)
+    // Calculate market data from cryptocurrencies
+    const totalMarketCap = cryptocurrencies.reduce((sum, crypto) => sum + crypto.marketCap, 0)
+    const volume24h = cryptocurrencies.reduce((sum, crypto) => sum + crypto.volume24h, 0)
 
-      return () => clearInterval(interval)
-    }
-  }, [liveUpdates])
+    // Calculate BTC dominance
+    const btcMarketCap = cryptocurrencies.find((c) => c.symbol === "BTC")?.marketCap || 0
+    const btcDominance = (btcMarketCap / totalMarketCap) * 100
+
+    setMarketData({
+      totalMarketCap: totalMarketCap / 1e12, // Convert to trillions
+      volume24h: volume24h / 1e9, // Convert to billions
+      btcDominance,
+    })
+  }, [cryptocurrencies])
 
   return (
     <Card className="mb-4">
@@ -36,6 +43,11 @@ const MarketOverviewBanner = ({ liveUpdates }) => {
           </div>
           <div className="text-sm">
             <span className="font-semibold">BTC Dominance:</span> {marketData.btcDominance.toFixed(1)}%
+          </div>
+          <div className="text-sm">
+            <span className={`font-semibold ${isLiveUpdatesEnabled ? "text-green-500" : "text-gray-500"}`}>
+              {isLiveUpdatesEnabled ? "Live Updates: On" : "Live Updates: Off"}
+            </span>
           </div>
         </div>
       </CardContent>
