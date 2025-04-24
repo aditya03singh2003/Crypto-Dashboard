@@ -8,20 +8,29 @@ import { fallbackService } from "./services/fallbackService"
 import { selectWebSocketActive } from "./features/crypto/cryptoSelectors"
 import CryptoTable from "./components/CryptoTable"
 import Header from "./components/Header"
+import FilterTabs from "./components/FilterTabs"
 import MarketOverview from "./components/MarketOverview"
 import Footer from "./components/Footer"
 import ExchangesPage from "./pages/ExchangesPage"
 import NftPage from "./pages/NftPage"
 import PortfolioPage from "./pages/PortfolioPage"
+import NewsPage from "./pages/NewsPage"
 import "./App.css"
 
 function App() {
   const dispatch = useDispatch()
   const webSocketActive = useSelector(selectWebSocketActive)
   const [isLiveUpdates, setIsLiveUpdates] = useState(true)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Start WebSocket connection when the component mounts
   useEffect(() => {
+    if (!mounted) return
+
     if (isLiveUpdates) {
       try {
         dispatch(startWebSocketConnection())
@@ -59,17 +68,28 @@ function App() {
         fallbackService.stop()
       }
     }
-  }, [dispatch, webSocketActive, isLiveUpdates])
+  }, [dispatch, webSocketActive, isLiveUpdates, mounted])
 
   const toggleLiveUpdates = () => {
     setIsLiveUpdates(!isLiveUpdates)
+  }
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <Router>
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
         <Header />
-        <main className="container mx-auto px-4 py-8 flex-grow">
+        <main className="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
           <div className="flex justify-end mb-4">
             <button
               onClick={toggleLiveUpdates}
@@ -85,6 +105,7 @@ function App() {
               element={
                 <>
                   <MarketOverview />
+                  <FilterTabs />
                   <CryptoTable />
                 </>
               }
@@ -92,6 +113,7 @@ function App() {
             <Route path="/exchanges" element={<ExchangesPage />} />
             <Route path="/nft" element={<NftPage />} />
             <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/news" element={<NewsPage />} />
           </Routes>
         </main>
         <Footer />

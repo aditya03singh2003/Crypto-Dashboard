@@ -59,7 +59,7 @@ export class WebSocketSimulator {
     }
   }
 
-  // Generate updated data
+  // Generate updated data with more random sparklines
   private generateUpdatedData(): any {
     return this.cryptoData.map((crypto) => {
       // Generate random price changes
@@ -75,6 +75,15 @@ export class WebSocketSimulator {
       const volumeChange = Math.random() * 0.04 - 0.02 // -2% to +2%
       const newVolume = crypto.volume24h * (1 + volumeChange)
 
+      // Update sparkline data with more randomness
+      const newSparkline = [...crypto.sparkline7d.slice(1)]
+
+      // Add a new point with more randomness
+      const lastPrice = crypto.sparkline7d[crypto.sparkline7d.length - 1]
+      const randomFactor = Math.random() * 0.03 - 0.015 // -1.5% to +1.5%
+      const newPoint = lastPrice * (1 + randomFactor)
+      newSparkline.push(newPoint)
+
       return {
         ...crypto,
         price: newPrice,
@@ -82,6 +91,8 @@ export class WebSocketSimulator {
         change24h: new24hChange,
         change7d: new7dChange,
         volume24h: newVolume,
+        volumeInCrypto: crypto.volumeInCrypto * (1 + volumeChange),
+        sparkline7d: newSparkline,
       }
     })
   }

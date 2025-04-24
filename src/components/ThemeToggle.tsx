@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { Moon, Sun } from "lucide-react"
 import { setTheme } from "../features/crypto/cryptoSlice"
@@ -9,9 +9,17 @@ import { selectTheme } from "../features/crypto/cryptoSelectors"
 export function ThemeToggle() {
   const dispatch = useDispatch()
   const theme = useSelector(selectTheme)
+  const [mounted, setMounted] = useState(false)
+
+  // Only show the toggle after mounting to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Update the theme when it changes in Redux
   useEffect(() => {
+    if (!mounted) return
+
     const root = window.document.documentElement
 
     if (theme === "system") {
@@ -27,26 +35,26 @@ export function ThemeToggle() {
     } else {
       root.classList.remove("dark")
     }
-  }, [theme])
+  }, [theme, mounted])
 
   // Listen for system theme changes
   useEffect(() => {
-    if (theme === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+    if (!mounted || theme !== "system") return
 
-      const handleChange = (e: MediaQueryListEvent) => {
-        const root = window.document.documentElement
-        if (e.matches) {
-          root.classList.add("dark")
-        } else {
-          root.classList.remove("dark")
-        }
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      const root = window.document.documentElement
+      if (e.matches) {
+        root.classList.add("dark")
+      } else {
+        root.classList.remove("dark")
       }
-
-      mediaQuery.addEventListener("change", handleChange)
-      return () => mediaQuery.removeEventListener("change", handleChange)
     }
-  }, [theme])
+
+    mediaQuery.addEventListener("change", handleChange)
+    return () => mediaQuery.removeEventListener("change", handleChange)
+  }, [theme, mounted])
 
   const toggleTheme = () => {
     if (theme === "light") {
@@ -56,6 +64,11 @@ export function ThemeToggle() {
     } else {
       dispatch(setTheme("light"))
     }
+  }
+
+  // Don't render anything until mounted to avoid hydration mismatch
+  if (!mounted) {
+    return null
   }
 
   return (

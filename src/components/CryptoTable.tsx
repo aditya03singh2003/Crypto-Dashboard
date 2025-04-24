@@ -5,18 +5,24 @@ import { toggleFavorite } from "../features/crypto/cryptoSlice"
 import { Star } from "lucide-react"
 import { formatCurrency, formatNumber, formatPercentage } from "../utils/formatters"
 import type { Crypto } from "../types"
+import { useState, useEffect } from "react"
 
 const CryptoTable = () => {
   const dispatch = useDispatch()
   const cryptos = useSelector(selectSortedCryptos)
   const favorites = useSelector(selectFavorites)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleToggleFavorite = (id: string) => {
     dispatch(toggleFavorite(id))
   }
 
-  // Show a loading state if no cryptos
-  if (!cryptos || cryptos.length === 0) {
+  // Show a loading state if not mounted or no cryptos
+  if (!mounted || !cryptos || cryptos.length === 0) {
     return <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">Loading cryptocurrency data...</div>
   }
 
@@ -129,7 +135,7 @@ const CryptoRow = ({ crypto, index, isFavorite, onToggleFavorite }: CryptoRowPro
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           )}
-          {formatPercentage(crypto.change1h)}
+          {formatPercentage(Math.abs(crypto.change1h))}
         </div>
       </td>
       <td
@@ -157,7 +163,7 @@ const CryptoRow = ({ crypto, index, isFavorite, onToggleFavorite }: CryptoRowPro
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           )}
-          {formatPercentage(crypto.change24h)}
+          {formatPercentage(Math.abs(crypto.change24h))}
         </div>
       </td>
       <td
@@ -185,7 +191,7 @@ const CryptoRow = ({ crypto, index, isFavorite, onToggleFavorite }: CryptoRowPro
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           )}
-          {formatPercentage(crypto.change7d)}
+          {formatPercentage(Math.abs(crypto.change7d))}
         </div>
       </td>
       <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
@@ -217,13 +223,18 @@ const CryptoRow = ({ crypto, index, isFavorite, onToggleFavorite }: CryptoRowPro
   )
 }
 
-const SparklineChart = ({ data, change }: { data: number[]; change: number }) => {
+interface SparklineChartProps {
+  data: number[]
+  change: number
+}
+
+const SparklineChart = ({ data, change }: SparklineChartProps) => {
   // Simple sparkline implementation
   if (!data || data.length === 0) return <div className="h-10 w-32"></div>
 
   const min = Math.min(...data)
   const max = Math.max(...data)
-  const range = max - min
+  const range = max - min || 1 // Avoid division by zero
 
   const points = data
     .map((value, index) => {
@@ -233,10 +244,13 @@ const SparklineChart = ({ data, change }: { data: number[]; change: number }) =>
     })
     .join(" ")
 
+  // Use the appropriate color based on the change
+  const strokeColor = change >= 0 ? "#10b981" : "#ef4444"
+
   return (
     <div className="h-10 w-32 inline-block">
       <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <polyline points={points} fill="none" stroke={change >= 0 ? "#10b981" : "#ef4444"} strokeWidth="2" />
+        <polyline points={points} fill="none" stroke={strokeColor} strokeWidth="2" />
       </svg>
     </div>
   )

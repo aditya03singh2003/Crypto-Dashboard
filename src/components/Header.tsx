@@ -2,17 +2,16 @@
 
 import type React from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { Search, Bell, Menu } from "lucide-react"
-import { setSortBy, setSortDirection, setFilter, setCurrency } from "../features/crypto/cryptoSlice"
-import { selectFilter, selectTheme, selectCurrency } from "../features/crypto/cryptoSelectors"
-import type { SortDirection, FilterType } from "../types"
+import { Search, Menu, Newspaper } from "lucide-react"
+import { setSortBy, setSortDirection, setCurrency } from "../features/crypto/cryptoSlice"
+import { selectTheme, selectCurrency } from "../features/crypto/cryptoSelectors"
+import type { SortDirection } from "../types"
 import { Link } from "react-router-dom"
 import { ThemeToggle } from "./ThemeToggle"
 import { useState } from "react"
 
 const Header = () => {
   const dispatch = useDispatch()
-  const filter = useSelector(selectFilter)
   const theme = useSelector(selectTheme)
   const currency = useSelector(selectCurrency)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -25,10 +24,6 @@ const Header = () => {
     dispatch(setSortDirection(e.target.value as SortDirection))
   }
 
-  const handleFilterChange = (filter: FilterType) => {
-    dispatch(setFilter(filter))
-  }
-
   const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(setCurrency(e.target.value))
   }
@@ -39,7 +34,7 @@ const Header = () => {
 
   return (
     <header className="bg-white dark:bg-gray-800 shadow">
-      <div className="container mx-auto px-4 py-4">
+      <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center mb-4 md:mb-0">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white mr-2">
@@ -65,6 +60,12 @@ const Header = () => {
                 className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
               >
                 NFT
+              </Link>
+              <Link
+                to="/news"
+                className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+              >
+                News
               </Link>
               <Link
                 to="/portfolio"
@@ -139,12 +140,14 @@ const Header = () => {
 
             <ThemeToggle />
 
-            <button
-              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              aria-label="Notifications"
-            >
-              <Bell size={20} />
-            </button>
+            <Link to="/news">
+              <button
+                className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                aria-label="News"
+              >
+                <Newspaper size={20} />
+              </button>
+            </Link>
 
             <button
               className="md:hidden p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
@@ -182,6 +185,13 @@ const Header = () => {
                 NFT
               </Link>
               <Link
+                to="/news"
+                className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                News
+              </Link>
+              <Link
                 to="/portfolio"
                 className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
                 onClick={() => setIsMenuOpen(false)}
@@ -191,60 +201,6 @@ const Header = () => {
             </nav>
           </div>
         )}
-
-        {/* Filter tabs */}
-        <div className="mt-4 flex overflow-x-auto pb-2">
-          <button
-            onClick={() => handleFilterChange("all")}
-            className={`px-4 py-2 rounded-lg mr-2 whitespace-nowrap ${
-              filter === "all"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
-            } transition-colors`}
-          >
-            All Cryptocurrencies
-          </button>
-          <button
-            onClick={() => handleFilterChange("favorites")}
-            className={`px-4 py-2 rounded-lg mr-2 whitespace-nowrap ${
-              filter === "favorites"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
-            } transition-colors`}
-          >
-            Favorites
-          </button>
-          <button
-            onClick={() => handleFilterChange("gainers")}
-            className={`px-4 py-2 rounded-lg mr-2 whitespace-nowrap ${
-              filter === "gainers"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
-            } transition-colors`}
-          >
-            Top Gainers
-          </button>
-          <button
-            onClick={() => handleFilterChange("losers")}
-            className={`px-4 py-2 rounded-lg mr-2 whitespace-nowrap ${
-              filter === "losers"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
-            } transition-colors`}
-          >
-            Top Losers
-          </button>
-          <button
-            onClick={() => handleFilterChange("trending")}
-            className={`px-4 py-2 rounded-lg mr-2 whitespace-nowrap ${
-              filter === "trending"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
-            } transition-colors`}
-          >
-            Trending
-          </button>
-        </div>
       </div>
     </header>
   )

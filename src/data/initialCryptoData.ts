@@ -1,5 +1,21 @@
 import type { Crypto } from "../types"
 
+// Generate random sparkline data with a trend bias
+const generateSparklineData = (basePrice: number, volatility = 0.05, trend = 0): number[] => {
+  const data: number[] = []
+  let currentPrice = basePrice
+
+  for (let i = 0; i < 50; i++) {
+    // Add a slight trend bias
+    const trendBias = trend * 0.002
+    const change = (Math.random() * 2 - 1 + trendBias) * volatility
+    currentPrice = currentPrice * (1 + change)
+    data.push(currentPrice)
+  }
+
+  return data
+}
+
 export const initialCryptoData: Crypto[] = [
   {
     id: "bitcoin",
@@ -15,7 +31,7 @@ export const initialCryptoData: Crypto[] = [
     volumeInCrypto: 467.81,
     circulatingSupply: 19.85 * 1000000,
     maxSupply: 21 * 1000000,
-    sparkline7d: [88000, 89000, 90000, 91000, 92000, 93000, 93759.48],
+    sparkline7d: generateSparklineData(93759.48, 0.02, 1), // Positive trend
   },
   {
     id: "ethereum",
@@ -31,7 +47,7 @@ export const initialCryptoData: Crypto[] = [
     volumeInCrypto: 13.05,
     circulatingSupply: 120.71 * 1000000,
     maxSupply: null,
-    sparkline7d: [1600, 1650, 1700, 1750, 1780, 1790, 1802.46],
+    sparkline7d: generateSparklineData(1802.46, 0.03, 1), // Positive trend
   },
   {
     id: "tether",
@@ -47,7 +63,7 @@ export const initialCryptoData: Crypto[] = [
     volumeInCrypto: 92.25 * 1000000,
     circulatingSupply: 145.27 * 1000000,
     maxSupply: null,
-    sparkline7d: [1, 1, 1, 1, 1, 1, 1],
+    sparkline7d: generateSparklineData(1.0, 0.001, 0), // Stable
   },
   {
     id: "ripple",
@@ -63,7 +79,7 @@ export const initialCryptoData: Crypto[] = [
     volumeInCrypto: 2.3 * 1000000,
     circulatingSupply: 58.39 * 1000000,
     maxSupply: 100 * 1000000,
-    sparkline7d: [2.1, 2.12, 2.15, 2.18, 2.2, 2.21, 2.22],
+    sparkline7d: generateSparklineData(2.22, 0.025, 1), // Positive trend
   },
   {
     id: "binancecoin",
@@ -72,14 +88,14 @@ export const initialCryptoData: Crypto[] = [
     image: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
     price: 606.65,
     change1h: 0.09,
-    change24h: -1.2,
+    change24h: -1.2, // Negative change
     change7d: 3.73,
     marketCap: 85471956947,
     volume24h: 1874281784,
     volumeInCrypto: 3.08 * 1000000,
     circulatingSupply: 140.89 * 1000000,
     maxSupply: 200 * 1000000,
-    sparkline7d: [580, 585, 590, 595, 600, 605, 606.65],
+    sparkline7d: generateSparklineData(606.65, 0.02, -0.5), // Negative trend
   },
   {
     id: "solana",
@@ -89,12 +105,28 @@ export const initialCryptoData: Crypto[] = [
     price: 151.51,
     change1h: 0.53,
     change24h: 1.26,
-    change7d: 14.74,
+    change7d: -4.74, // Negative change
     marketCap: 78381958631,
     volume24h: 4881674486,
     volumeInCrypto: 32.25 * 1000000,
     circulatingSupply: 517.31 * 1000000,
     maxSupply: null,
-    sparkline7d: [130, 135, 140, 145, 148, 150, 151.51],
+    sparkline7d: generateSparklineData(151.51, 0.03, -1), // Negative trend
+  },
+  {
+    id: "cardano",
+    name: "Cardano",
+    symbol: "ADA",
+    image: "https://assets.coingecko.com/coins/images/975/large/cardano.png",
+    price: 0.31,
+    change1h: -0.2, // Negative change
+    change24h: -2.1, // Negative change
+    change7d: -5.3, // Negative change
+    marketCap: 10987654321,
+    volume24h: 567890123,
+    volumeInCrypto: 1832548,
+    circulatingSupply: 35.4 * 1000000,
+    maxSupply: 45 * 1000000,
+    sparkline7d: generateSparklineData(0.31, 0.025, -1), // Negative trend
   },
 ]
