@@ -16,7 +16,7 @@ export interface Crypto {
 }
 
 export type SortDirection = "asc" | "desc"
-export type FilterType = "all" | "favorites" | "gainers" | "losers" | "trending"
+export type FilterType = "all" | "favorites" | "gainers" | "losers" | "trending" | "volume" | "marketCap"
 
 export interface UserPreferences {
   theme: "light" | "dark" | "system"
@@ -24,4 +24,21 @@ export interface UserPreferences {
   sortBy: string
   sortDirection: SortDirection
   filter: FilterType
+}
+
+export interface WebSocketOptions {
+  updateFrequency?: number
+  volatility?: number
+}
+
+export interface PortfolioAsset {
+  id: string
+  name: string
+  symbol: string
+  image: string
+  amount: number
+  price: number
+  value: number
+  change24h: number
+  change7d: number
 }

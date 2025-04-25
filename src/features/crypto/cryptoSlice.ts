@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
 import type { AppThunk } from "../../app/store"
-import type { Crypto, SortDirection, FilterType } from "../../types"
+import type { Crypto, SortDirection, FilterType, WebSocketOptions } from "../../types"
 import { initialCryptoData } from "../../data/initialCryptoData"
 import { websocketService } from "../../services/websocketService"
 
@@ -11,9 +11,13 @@ interface CryptoState {
   filter: FilterType
   favorites: string[]
   webSocketActive: boolean
+  webSocketOptions: WebSocketOptions
   theme: "light" | "dark" | "system"
   currency: string
   userPortfolio: { [key: string]: number } // Symbol -> Amount
+  searchTerm: string
+  isLoading: boolean
+  error: string | null
 }
 
 // Load state from localStorage if available
@@ -44,9 +48,16 @@ const initialState: CryptoState = {
   filter: "all",
   favorites: [],
   webSocketActive: false,
-  theme: "system",
+  webSocketOptions: {
+    updateFrequency: 2000,
+    volatility: 0.01,
+  },
+  theme: "dark",
   currency: "USD",
   userPortfolio: {},
+  searchTerm: "",
+  isLoading: false,
+  error: null,
   ...savedState,
 }
 
@@ -67,6 +78,7 @@ const saveState = (state: CryptoState) => {
       theme: state.theme,
       currency: state.currency,
       userPortfolio: state.userPortfolio,
+      webSocketOptions: state.webSocketOptions,
     }
     const serializedState = JSON.stringify(stateToSave)
     localStorage.setItem("cryptoState", serializedState)
@@ -81,6 +93,8 @@ export const cryptoSlice = createSlice({
   reducers: {
     updateCryptoData: (state, action: PayloadAction<Crypto[]>) => {
       state.cryptos = action.payload
+      state.isLoading = false
+      state.error = null
     },
     setSortBy: (state, action: PayloadAction<string>) => {
       state.sortBy = action.payload as any
@@ -106,7 +120,14 @@ export const cryptoSlice = createSlice({
     setWebSocketActive: (state, action: PayloadAction<boolean>) => {
       state.webSocketActive = action.payload
     },
-    setTheme: (state, action: PayloadAction<"light" | "dark" | "system">) => {
+    setWebSocketOptions: (state, action: PayloadAction<WebSocketOptions>) => {
+      state.webSocketOptions = {
+        ...state.webSocketOptions,
+        ...action.payload,
+      }
+      saveState(state)
+    },
+    setThemeValue: (state, action: PayloadAction<"light" | "dark" | "system">) => {
       state.theme = action.payload
       saveState(state)
     },
@@ -132,6 +153,16 @@ export const cryptoSlice = createSlice({
       state.userPortfolio = {}
       saveState(state)
     },
+    setSearchTerm: (state, action: PayloadAction<string>) => {
+      state.searchTerm = action.payload
+    },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.isLoading = action.payload
+    },
+    setError: (state, action: PayloadAction<string | null>) => {
+      state.error = action.payload
+      state.isLoading = false
+    },
   },
 })
 
@@ -142,19 +173,29 @@ export const {
   setFilter,
   toggleFavorite,
   setWebSocketActive,
-  setTheme,
+  setWebSocketOptions,
+  setThemeValue,
   setCurrency,
   updatePortfolio,
   clearPortfolio,
+  setSearchTerm,
+  setLoading,
+  setError,
 } = cryptoSlice.actions
 
-// Thunk to start WebSocket connection
+// Thunk to start WebSocket connection with enhanced options
 export const startWebSocketConnection = (): AppThunk => (dispatch, getState) => {
-  const { webSocketActive } = getState().crypto
+  const { webSocketActive, webSocketOptions } = getState().crypto
 
   if (!webSocketActive) {
-    dispatch(setWebSocketActive(true))
-    websocketService.connect()
+    dispatch(setLoading(true))
+    try {
+      dispatch(setWebSocketActive(true))
+      websocketService.connect(webSocketOptions)
+      dispatch(setLoading(false))
+    } catch (error) {
+      dispatch(setError(error instanceof Error ? error.message : "Unknown error"))
+    }
   }
 }
 
@@ -167,5 +208,44 @@ export const stopWebSocketConnection = (): AppThunk => (dispatch, getState) => {
     dispatch(setWebSocketActive(false))
   }
 }
+
+// Thunk to update WebSocket options and reconnect
+export const updateWebSocketConfig =
+  (options: WebSocketOptions): AppThunk =>
+  (dispatch, getState) => {
+    const { webSocketActive } = getState().crypto
+
+    dispatch(setWebSocketOptions(options))
+
+    if (webSocketActive) {
+      // Reconnect with new options
+      dispatch(stopWebSocketConnection())
+      dispatch(startWebSocketConnection())
+    }
+  }
+
+// Update the setTheme action to properly apply the theme
+export const setTheme =
+  (theme: "light" | "dark" | "system"): AppThunk =>
+  (dispatch) => {
+    // Update the theme in Redux
+    dispatch(setThemeValue(theme))
+
+    // Apply the theme to the document
+    if (typeof document !== "undefined") {
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark")
+        document.documentElement.classList.remove("light")
+      } else {
+        document.documentElement.classList.add("light")
+        document.documentElement.classList.remove("dark")
+      }
+    }
+
+    // Save to localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem("theme", theme)
+    }
+  }
 
 export default cryptoSlice.reducer

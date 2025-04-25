@@ -23,10 +23,13 @@ export const selectTheme = (state: RootState) => state.crypto.theme
 // Selector to get currency
 export const selectCurrency = (state: RootState) => state.crypto.currency
 
+// Selector to get WebSocket active state
+export const selectWebSocketActive = (state: RootState) => state.crypto.webSocketActive
+
 // Selector to get user portfolio
 export const selectUserPortfolio = (state: RootState) => state.crypto.userPortfolio
 
-// Selector to get filtered cryptos
+// Selector to get filtered cryptos with enhanced filtering options
 export const selectFilteredCryptos = createSelector(
   [selectCryptos, selectFavorites, selectFilter],
   (cryptos, favorites, filter: FilterType) => {
@@ -34,11 +37,15 @@ export const selectFilteredCryptos = createSelector(
       case "favorites":
         return cryptos.filter((crypto) => favorites.includes(crypto.id))
       case "gainers":
-        return [...cryptos].sort((a, b) => b.change24h - a.change24h).slice(0, 20)
+        return [...cryptos].sort((a, b) => b.change24h - a.change24h)
       case "losers":
-        return [...cryptos].sort((a, b) => a.change24h - b.change24h).slice(0, 20)
+        return [...cryptos].sort((a, b) => a.change24h - b.change24h)
       case "trending":
-        return [...cryptos].sort((a, b) => b.volume24h - a.volume24h).slice(0, 20)
+        return [...cryptos].sort((a, b) => b.volume24h - a.volume24h)
+      case "volume":
+        return [...cryptos].sort((a, b) => b.volume24h - a.volume24h)
+      case "marketCap":
+        return [...cryptos].sort((a, b) => b.marketCap - a.marketCap)
       case "all":
       default:
         return cryptos
@@ -94,6 +101,11 @@ export const selectTopLosers = createSelector([selectCryptos], (cryptos) => {
   return [...cryptos].sort((a, b) => a.change24h - b.change24h).slice(0, 5)
 })
 
+// Selector to get top by volume
+export const selectTopByVolume = createSelector([selectCryptos], (cryptos) => {
+  return [...cryptos].sort((a, b) => b.volume24h - a.volume24h).slice(0, 5)
+})
+
 // Selector to get portfolio value
 export const selectPortfolioValue = createSelector([selectCryptos, selectUserPortfolio], (cryptos, portfolio) => {
   return Object.entries(portfolio).reduce((total, [symbol, amount]) => {
@@ -124,5 +136,16 @@ export const selectPortfolioAssets = createSelector([selectCryptos, selectUserPo
     .filter(Boolean)
 })
 
-// Selector to get WebSocket active state
-export const selectWebSocketActive = (state: RootState) => state.crypto.webSocketActive
+// Selector to get market statistics
+export const selectMarketStats = createSelector([selectCryptos], (cryptos) => {
+  const totalMarketCap = cryptos.reduce((sum, crypto) => sum + crypto.marketCap, 0)
+  const totalVolume = cryptos.reduce((sum, crypto) => sum + crypto.volume24h, 0)
+  const btcDominance = ((cryptos.find((c) => c.id === "bitcoin")?.marketCap || 0) / totalMarketCap) * 100
+
+  return {
+    totalMarketCap,
+    totalVolume,
+    btcDominance,
+    cryptoCount: cryptos.length,
+  }
+})

@@ -5,10 +5,14 @@ import cryptoReducer, {
   setFilter,
   toggleFavorite,
   setWebSocketActive,
+  setWebSocketOptions,
   setTheme,
   setCurrency,
   updatePortfolio,
   clearPortfolio,
+  setSearchTerm,
+  setLoading,
+  setError,
 } from "../cryptoSlice"
 import { initialCryptoData } from "../../../data/initialCryptoData"
 import { describe, it, expect } from "@jest/globals"
@@ -21,9 +25,16 @@ describe("crypto reducer", () => {
     filter: "all" as const,
     favorites: [],
     webSocketActive: false,
-    theme: "system" as const,
+    webSocketOptions: {
+      updateFrequency: 2000,
+      volatility: 0.01,
+    },
+    theme: "dark" as const,
     currency: "USD",
     userPortfolio: {},
+    searchTerm: "",
+    isLoading: false,
+    error: null,
   }
 
   it("should handle initial state", () => {
@@ -38,6 +49,9 @@ describe("crypto reducer", () => {
         theme: expect.any(String),
         currency: expect.any(String),
         userPortfolio: expect.any(Object),
+        searchTerm: "",
+        isLoading: false,
+        error: null,
       }),
     )
   })
@@ -47,6 +61,8 @@ describe("crypto reducer", () => {
 
     const actual = cryptoReducer(initialState, updateCryptoData(mockData))
     expect(actual.cryptos).toEqual(mockData)
+    expect(actual.isLoading).toBe(false)
+    expect(actual.error).toBeNull()
   })
 
   it("should handle setSortBy", () => {
@@ -60,8 +76,8 @@ describe("crypto reducer", () => {
   })
 
   it("should handle setFilter", () => {
-    const actual = cryptoReducer(initialState, setFilter("favorites"))
-    expect(actual.filter).toEqual("favorites")
+    const actual = cryptoReducer(initialState, setFilter("gainers"))
+    expect(actual.filter).toEqual("gainers")
   })
 
   it("should handle toggleFavorite - add to favorites", () => {
@@ -84,9 +100,15 @@ describe("crypto reducer", () => {
     expect(actual.webSocketActive).toEqual(true)
   })
 
+  it("should handle setWebSocketOptions", () => {
+    const options = { updateFrequency: 5000, volatility: 0.02 }
+    const actual = cryptoReducer(initialState, setWebSocketOptions(options))
+    expect(actual.webSocketOptions).toEqual(options)
+  })
+
   it("should handle setTheme", () => {
-    const actual = cryptoReducer(initialState, setTheme("dark"))
-    expect(actual.theme).toEqual("dark")
+    const actual = cryptoReducer(initialState, setTheme("light"))
+    expect(actual.theme).toEqual("light")
   })
 
   it("should handle setCurrency", () => {
@@ -124,5 +146,22 @@ describe("crypto reducer", () => {
     }
     const actual = cryptoReducer(state, clearPortfolio())
     expect(actual.userPortfolio).toEqual({})
+  })
+
+  it("should handle setSearchTerm", () => {
+    const actual = cryptoReducer(initialState, setSearchTerm("bitcoin"))
+    expect(actual.searchTerm).toEqual("bitcoin")
+  })
+
+  it("should handle setLoading", () => {
+    const actual = cryptoReducer(initialState, setLoading(true))
+    expect(actual.isLoading).toEqual(true)
+  })
+
+  it("should handle setError", () => {
+    const errorMessage = "Connection failed"
+    const actual = cryptoReducer(initialState, setError(errorMessage))
+    expect(actual.error).toEqual(errorMessage)
+    expect(actual.isLoading).toEqual(false)
   })
 })

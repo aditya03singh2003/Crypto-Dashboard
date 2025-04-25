@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
-import { startWebSocketConnection, stopWebSocketConnection } from "./features/crypto/cryptoSlice"
+import { startWebSocketConnection, stopWebSocketConnection, setTheme } from "./features/crypto/cryptoSlice"
+import { selectWebSocketActive, selectTheme } from "./features/crypto/cryptoSelectors"
 import { fallbackService } from "./services/fallbackService"
-import { selectWebSocketActive } from "./features/crypto/cryptoSelectors"
 import CryptoTable from "./components/CryptoTable"
 import Header from "./components/Header"
-import FilterTabs from "./components/FilterTabs"
+import MarketFilters from "./components/MarketFilters"
 import MarketOverview from "./components/MarketOverview"
 import Footer from "./components/Footer"
 import ExchangesPage from "./pages/ExchangesPage"
@@ -20,12 +20,32 @@ import "./App.css"
 function App() {
   const dispatch = useDispatch()
   const webSocketActive = useSelector(selectWebSocketActive)
+  const theme = useSelector(selectTheme)
   const [isLiveUpdates, setIsLiveUpdates] = useState(true)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+
+    // Initialize theme from localStorage
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | "system" | null
+    if (savedTheme && savedTheme !== theme) {
+      dispatch(setTheme(savedTheme))
+    }
+  }, [dispatch, theme])
+
+  // Apply theme effect
+  useEffect(() => {
+    if (!mounted) return
+
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark")
+      document.documentElement.classList.remove("light")
+    } else {
+      document.documentElement.classList.add("light")
+      document.documentElement.classList.remove("dark")
+    }
+  }, [theme, mounted])
 
   // Start WebSocket connection when the component mounts
   useEffect(() => {
@@ -87,7 +107,7 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
+      <div className={`min-h-screen ${theme === "dark" ? "bg-gray-900" : "bg-gray-100"} flex flex-col`}>
         <Header />
         <main className="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
           <div className="flex justify-end mb-4">
@@ -105,7 +125,7 @@ function App() {
               element={
                 <>
                   <MarketOverview />
-                  <FilterTabs />
+                  <MarketFilters />
                   <CryptoTable />
                 </>
               }

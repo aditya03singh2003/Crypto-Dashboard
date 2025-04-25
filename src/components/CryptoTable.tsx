@@ -23,50 +23,38 @@ const CryptoTable = () => {
 
   // Show a loading state if not mounted or no cryptos
   if (!mounted || !cryptos || cryptos.length === 0) {
-    return <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">Loading cryptocurrency data...</div>
+    return <div className="p-4 bg-gray-800 rounded-lg shadow">Loading cryptocurrency data...</div>
   }
 
   return (
     <div className="overflow-x-auto rounded-lg shadow mt-6">
-      <table className="min-w-full bg-white dark:bg-gray-800">
-        <thead className="bg-gray-50 dark:bg-gray-700">
+      <table className="min-w-full bg-gray-800">
+        <thead className="bg-gray-700">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-10">
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider w-10">
               <Star className="h-4 w-4 text-gray-400" />
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-10">
-              #
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              Name
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              Price
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              1h %
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              24h %
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              7d %
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider w-10">#</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Name</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Price</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">1h %</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">24h %</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">7d %</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
               Market Cap <InfoIcon />
             </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
               Volume(24h) <InfoIcon />
             </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
               Circulating Supply <InfoIcon />
             </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
               Last 7 Days
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="divide-y divide-gray-700">
           {cryptos.map((crypto, index) => (
             <CryptoRow
               key={crypto.id}
@@ -91,27 +79,27 @@ interface CryptoRowProps {
 
 const CryptoRow = ({ crypto, index, isFavorite, onToggleFavorite }: CryptoRowProps) => {
   return (
-    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
+    <tr className="hover:bg-gray-700">
       <td className="px-4 py-4 whitespace-nowrap">
         <button onClick={() => onToggleFavorite(crypto.id)} className="focus:outline-none">
           <Star className={`h-5 w-5 ${isFavorite ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`} />
         </button>
       </td>
-      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{index}</td>
+      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-400">{index}</td>
       <td className="px-4 py-4 whitespace-nowrap">
         <div className="flex items-center">
           <img src={crypto.image || "/placeholder.svg"} alt={crypto.name} className="h-8 w-8 mr-3" />
           <div>
-            <div className="text-sm font-medium text-gray-900 dark:text-white">{crypto.name}</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">{crypto.symbol}</div>
+            <div className="text-sm font-medium text-white">{crypto.name}</div>
+            <div className="text-sm text-gray-400">{crypto.symbol}</div>
           </div>
         </div>
       </td>
-      <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-white">
+      <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium text-white">
         {formatCurrency(crypto.price)}
       </td>
       <td
-        className={`px-4 py-4 whitespace-nowrap text-right text-sm font-medium ${crypto.change1h >= 0 ? "text-green-600" : "text-red-600"}`}
+        className={`px-4 py-4 whitespace-nowrap text-right text-sm font-medium ${crypto.change1h >= 0 ? "text-green-500" : "text-red-500"}`}
       >
         <div className="flex items-center justify-end">
           {crypto.change1h >= 0 ? (
@@ -139,7 +127,7 @@ const CryptoRow = ({ crypto, index, isFavorite, onToggleFavorite }: CryptoRowPro
         </div>
       </td>
       <td
-        className={`px-4 py-4 whitespace-nowrap text-right text-sm font-medium ${crypto.change24h >= 0 ? "text-green-600" : "text-red-600"}`}
+        className={`px-4 py-4 whitespace-nowrap text-right text-sm font-medium ${crypto.change24h >= 0 ? "text-green-500" : "text-red-500"}`}
       >
         <div className="flex items-center justify-end">
           {crypto.change24h >= 0 ? (
@@ -167,7 +155,7 @@ const CryptoRow = ({ crypto, index, isFavorite, onToggleFavorite }: CryptoRowPro
         </div>
       </td>
       <td
-        className={`px-4 py-4 whitespace-nowrap text-right text-sm font-medium ${crypto.change7d >= 0 ? "text-green-600" : "text-red-600"}`}
+        className={`px-4 py-4 whitespace-nowrap text-right text-sm font-medium ${crypto.change7d >= 0 ? "text-green-500" : "text-red-500"}`}
       >
         <div className="flex items-center justify-end">
           {crypto.change7d >= 0 ? (
@@ -194,21 +182,19 @@ const CryptoRow = ({ crypto, index, isFavorite, onToggleFavorite }: CryptoRowPro
           {formatPercentage(Math.abs(crypto.change7d))}
         </div>
       </td>
-      <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
-        {formatCurrency(crypto.marketCap)}
-      </td>
-      <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+      <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-white">{formatCurrency(crypto.marketCap)}</td>
+      <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-white">
         <div>{formatCurrency(crypto.volume24h)}</div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="text-xs text-gray-400">
           {formatNumber(crypto.volumeInCrypto)} {crypto.symbol}
         </div>
       </td>
-      <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+      <td className="px-4 py-4 whitespace-nowrap text-right text-sm text-white">
         <div>
           {formatNumber(crypto.circulatingSupply)} {crypto.symbol}
         </div>
         {crypto.maxSupply && (
-          <div className="mt-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+          <div className="mt-1 w-full bg-gray-700 rounded-full h-1.5">
             <div
               className="bg-blue-600 h-1.5 rounded-full"
               style={{ width: `${(crypto.circulatingSupply / crypto.maxSupply) * 100}%` }}

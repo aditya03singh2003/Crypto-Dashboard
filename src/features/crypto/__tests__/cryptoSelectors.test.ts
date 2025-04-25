@@ -7,9 +7,12 @@ import {
   selectSortedCryptos,
   selectTopGainers,
   selectTopLosers,
+  selectTopByVolume,
   selectPortfolioValue,
   selectPortfolioAssets,
+  selectMarketStats,
 } from "../cryptoSelectors"
+import { describe, it, expect } from "@jest/globals"
 
 describe("crypto selectors", () => {
   const mockCryptos = [
@@ -27,6 +30,7 @@ describe("crypto selectors", () => {
       maxSupply: 21000000,
       volumeInCrypto: 20,
       sparkline7d: [48000, 49000, 50000],
+      change1h: 0.5,
     },
     {
       id: "ethereum",
@@ -42,6 +46,7 @@ describe("crypto selectors", () => {
       maxSupply: null,
       volumeInCrypto: 166.67,
       sparkline7d: [2900, 2950, 3000],
+      change1h: -0.2,
     },
     {
       id: "cardano",
@@ -57,6 +62,7 @@ describe("crypto selectors", () => {
       maxSupply: 45000000,
       volumeInCrypto: 133333.33,
       sparkline7d: [1.4, 1.45, 1.5],
+      change1h: 1.2,
     },
   ]
 
@@ -71,6 +77,16 @@ describe("crypto selectors", () => {
         BTC: 0.5,
         ETH: 2.0,
       },
+      searchTerm: "",
+      isLoading: false,
+      error: null,
+      webSocketActive: false,
+      webSocketOptions: {
+        updateFrequency: 2000,
+        volatility: 0.01,
+      },
+      theme: "dark",
+      currency: "USD",
     },
   }
 
@@ -136,6 +152,19 @@ describe("crypto selectors", () => {
     expect(result[0].id).toEqual("ethereum") // Lowest 24h change
   })
 
+  it("should select filtered cryptos - volume", () => {
+    const state = {
+      ...mockState,
+      crypto: {
+        ...mockState.crypto,
+        filter: "volume",
+      },
+    }
+    const result = selectFilteredCryptos(state)
+    expect(result).toHaveLength(3)
+    expect(result[0].id).toEqual("bitcoin") // Highest volume
+  })
+
   it("should select sorted cryptos", () => {
     const result = selectSortedCryptos(mockState)
     expect(result).toHaveLength(3)
@@ -172,6 +201,12 @@ describe("crypto selectors", () => {
     expect(result[0].id).toEqual("ethereum") // Lowest 24h change
   })
 
+  it("should select top by volume", () => {
+    const result = selectTopByVolume(mockState)
+    expect(result).toHaveLength(3)
+    expect(result[0].id).toEqual("bitcoin") // Highest volume
+  })
+
   it("should calculate portfolio value", () => {
     const result = selectPortfolioValue(mockState)
     // 0.5 BTC * 50000 + 2.0 ETH * 3000 = 25000 + 6000 = 31000
@@ -189,5 +224,13 @@ describe("crypto selectors", () => {
     expect(result[1].symbol).toEqual("ETH")
     expect(result[1].amount).toEqual(2.0)
     expect(result[1].value).toEqual(6000)
+  })
+
+  it("should calculate market statistics", () => {
+    const result = selectMarketStats(mockState)
+    expect(result.totalMarketCap).toEqual(1550000000) // Sum of all market caps
+    expect(result.totalVolume).toEqual(1700000) // Sum of all volumes
+    expect(result.btcDominance).toBeCloseTo(64.52, 1) // BTC market cap / total market cap * 100
+    expect(result.cryptoCount).toEqual(3)
   })
 })
