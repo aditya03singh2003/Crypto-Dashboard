@@ -6,11 +6,13 @@ import { Star } from "lucide-react"
 import { formatCurrency, formatNumber, formatPercentage } from "../utils/formatters"
 import type { Crypto } from "../types"
 import { useState, useEffect } from "react"
+import { selectTheme } from "../features/crypto/cryptoSelectors"
 
 const CryptoTable = () => {
   const dispatch = useDispatch()
   const cryptos = useSelector(selectSortedCryptos)
   const favorites = useSelector(selectFavorites)
+  const theme = useSelector(selectTheme)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -28,33 +30,67 @@ const CryptoTable = () => {
 
   return (
     <div className="overflow-x-auto rounded-lg shadow mt-6">
-      <table className="min-w-full bg-gray-800">
-        <thead className="bg-gray-700">
+      <table className={`min-w-full ${theme === "dark" ? "bg-gray-800" : "bg-white"}`}>
+        <thead className={theme === "dark" ? "bg-gray-700" : "bg-gray-100"}>
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider w-10">
-              <Star className="h-4 w-4 text-gray-400" />
+            <th
+              className={`px-4 py-3 text-left text-xs font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-700"} uppercase tracking-wider w-10`}
+            >
+              <Star className={`h-4 w-4 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`} />
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider w-10">#</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Name</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Price</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">1h %</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">24h %</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">7d %</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+            <th
+              className={`px-4 py-3 text-left text-xs font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-700"} uppercase tracking-wider w-10`}
+            >
+              #
+            </th>
+            <th
+              className={`px-4 py-3 text-left text-xs font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-700"} uppercase tracking-wider`}
+            >
+              Name
+            </th>
+            <th
+              className={`px-4 py-3 text-right text-xs font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-700"} uppercase tracking-wider`}
+            >
+              Price
+            </th>
+            <th
+              className={`px-4 py-3 text-right text-xs font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-700"} uppercase tracking-wider`}
+            >
+              1h %
+            </th>
+            <th
+              className={`px-4 py-3 text-right text-xs font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-700"} uppercase tracking-wider`}
+            >
+              24h %
+            </th>
+            <th
+              className={`px-4 py-3 text-right text-xs font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-700"} uppercase tracking-wider`}
+            >
+              7d %
+            </th>
+            <th
+              className={`px-4 py-3 text-right text-xs font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-700"} uppercase tracking-wider`}
+            >
               Market Cap <InfoIcon />
             </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+            <th
+              className={`px-4 py-3 text-right text-xs font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-700"} uppercase tracking-wider`}
+            >
               Volume(24h) <InfoIcon />
             </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+            <th
+              className={`px-4 py-3 text-right text-xs font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-700"} uppercase tracking-wider`}
+            >
               Circulating Supply <InfoIcon />
             </th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+            <th
+              className={`px-4 py-3 text-right text-xs font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-700"} uppercase tracking-wider`}
+            >
               Last 7 Days
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-700">
+        <tbody className={`divide-y ${theme === "dark" ? "divide-gray-700" : "divide-gray-200"}`}>
           {cryptos.map((crypto, index) => (
             <CryptoRow
               key={crypto.id}
@@ -62,6 +98,7 @@ const CryptoTable = () => {
               index={index + 1}
               isFavorite={favorites.includes(crypto.id)}
               onToggleFavorite={handleToggleFavorite}
+              theme={theme}
             />
           ))}
         </tbody>
@@ -75,27 +112,36 @@ interface CryptoRowProps {
   index: number
   isFavorite: boolean
   onToggleFavorite: (id: string) => void
+  theme: string
 }
 
-const CryptoRow = ({ crypto, index, isFavorite, onToggleFavorite }: CryptoRowProps) => {
+const CryptoRow = ({ crypto, index, isFavorite, onToggleFavorite, theme }: CryptoRowProps) => {
   return (
-    <tr className="hover:bg-gray-700">
+    <tr className={theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-50"}>
       <td className="px-4 py-4 whitespace-nowrap">
         <button onClick={() => onToggleFavorite(crypto.id)} className="focus:outline-none">
-          <Star className={`h-5 w-5 ${isFavorite ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`} />
+          <Star
+            className={`h-5 w-5 ${isFavorite ? "text-yellow-400 fill-yellow-400" : theme === "dark" ? "text-gray-300" : "text-gray-400"}`}
+          />
         </button>
       </td>
-      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-400">{index}</td>
+      <td className={`px-4 py-4 whitespace-nowrap text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
+        {index}
+      </td>
       <td className="px-4 py-4 whitespace-nowrap">
         <div className="flex items-center">
           <img src={crypto.image || "/placeholder.svg"} alt={crypto.name} className="h-8 w-8 mr-3" />
           <div>
-            <div className="text-sm font-medium text-white">{crypto.name}</div>
-            <div className="text-sm text-gray-400">{crypto.symbol}</div>
+            <div className={`text-sm font-medium ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+              {crypto.name}
+            </div>
+            <div className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>{crypto.symbol}</div>
           </div>
         </div>
       </td>
-      <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium text-white">
+      <td
+        className={`px-4 py-4 whitespace-nowrap text-right text-sm font-medium ${theme === "dark" ? "text-white" : "text-gray-900"}`}
+      >
         {formatCurrency(crypto.price)}
       </td>
       <td

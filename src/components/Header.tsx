@@ -38,32 +38,40 @@ const Header = () => {
   if (!mounted) return null
 
   return (
-    <header className="bg-gray-800 dark:bg-gray-800 py-3 px-4 shadow-md">
+    <header className={`${theme === "dark" ? "bg-gray-800" : "bg-white"} py-3 px-4 shadow-md`}>
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
         {/* Logo and Name */}
         <div className="flex items-center space-x-3">
           <div className="bg-blue-600 p-2 rounded-lg">
             <BarChart2 className="h-6 w-6 text-white" />
           </div>
-          <h1 className="text-xl font-bold text-white">CryptoTracker Pro</h1>
+          <h1 className={`text-xl font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+            CryptoTracker Pro
+          </h1>
         </div>
 
         <div className="relative">
           <input
             type="text"
             placeholder="Search..."
-            className="pl-10 pr-4 py-2 rounded-lg border border-gray-600 bg-gray-700 text-white w-full sm:w-auto min-w-[250px]"
+            className={`pl-10 pr-4 py-2 rounded-lg border ${
+              theme === "dark" ? "border-gray-600 bg-gray-700 text-white" : "border-gray-300 bg-gray-100 text-gray-900"
+            } w-full sm:w-auto min-w-[250px]`}
           />
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-white">Currency:</span>
+            <span className={theme === "dark" ? "text-white" : "text-gray-900"}>Currency:</span>
             <select
               value={currency}
               onChange={handleCurrencyChange}
-              className="bg-gray-700 border border-gray-600 text-white rounded-lg p-2"
+              className={`${
+                theme === "dark"
+                  ? "bg-gray-700 border-gray-600 text-white"
+                  : "bg-gray-100 border-gray-300 text-gray-900"
+              } border rounded-lg p-2`}
             >
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
@@ -73,11 +81,15 @@ const Header = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-white">Sort by:</span>
+            <span className={theme === "dark" ? "text-white" : "text-gray-900"}>Sort by:</span>
             <select
               value={sortBy}
               onChange={handleSortChange}
-              className="bg-gray-700 border border-gray-600 text-white rounded-lg p-2"
+              className={`${
+                theme === "dark"
+                  ? "bg-gray-700 border-gray-600 text-white"
+                  : "bg-gray-100 border-gray-300 text-gray-900"
+              } border rounded-lg p-2`}
             >
               <option value="marketCap">Market Cap</option>
               <option value="price">Price</option>
@@ -90,11 +102,15 @@ const Header = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-white">Direction:</span>
+            <span className={theme === "dark" ? "text-white" : "text-gray-900"}>Direction:</span>
             <select
               value={sortDirection}
               onChange={handleDirectionChange}
-              className="bg-gray-700 border border-gray-600 text-white rounded-lg p-2"
+              className={`${
+                theme === "dark"
+                  ? "bg-gray-700 border-gray-600 text-white"
+                  : "bg-gray-100 border-gray-300 text-gray-900"
+              } border rounded-lg p-2`}
             >
               <option value="desc">Descending</option>
               <option value="asc">Ascending</option>
@@ -103,7 +119,11 @@ const Header = () => {
 
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full bg-gray-700 text-white hover:bg-gray-600 transition-colors"
+            className={`p-2 rounded-full ${
+              theme === "dark"
+                ? "bg-gray-700 text-white hover:bg-gray-600"
+                : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+            } transition-colors`}
             title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           >
             {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}

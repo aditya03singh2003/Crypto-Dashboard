@@ -11,6 +11,7 @@ import Header from "./components/Header"
 import MarketFilters from "./components/MarketFilters"
 import MarketOverview from "./components/MarketOverview"
 import Footer from "./components/Footer"
+import NavigationIcons from "./components/NavigationIcons"
 import ExchangesPage from "./pages/ExchangesPage"
 import NftPage from "./pages/NftPage"
 import PortfolioPage from "./pages/PortfolioPage"
@@ -109,7 +110,7 @@ function App() {
     <Router>
       <div className={`min-h-screen ${theme === "dark" ? "bg-gray-900" : "bg-gray-100"} flex flex-col`}>
         <Header />
-        <main className="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
+        <main className="max-w-7xl mx-auto px-4 py-4 flex-grow w-full">
           <div className="flex justify-end mb-4">
             <button
               onClick={toggleLiveUpdates}
@@ -118,6 +119,8 @@ function App() {
               {isLiveUpdates ? "Live Updates: ON" : "Live Updates: OFF"}
             </button>
           </div>
+
+          <NavigationIcons />
 
           <Routes>
             <Route
